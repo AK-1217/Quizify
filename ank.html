@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JS Quiz Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a26;
+      --border: #2a2a3f;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --gold: #f59e0b;
+      --silver: #94a3b8;
+      --bronze: #cd7c2f;
+      --text: #f1f5f9;
+      --muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glowing orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb2 {
+      position: fixed;
+      bottom: -200px;
+      left: -200px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.2));
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+
+    .header p {
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    /* Screen management */
+    .screen { display: none; animation: fadeIn 0.4s ease; }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    /* Start screen */
+    .name-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .name-input-group label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      padding: 14px 18px;
+      width: 100%;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5b21b6);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(124,58,237,0.4);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* Quiz screen */
+    .quiz-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .q-counter {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    .score-badge {
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      color: var(--accent2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* Timer */
+    .timer-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .timer-ring {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .timer-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .timer-ring .ring-bg { stroke: var(--border); }
+    .timer-ring .ring-fill {
+      stroke: var(--accent2);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+
+    .timer-number {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .timer-label { font-size: 12px; color: var(--muted); }
+
+    /* Question */
+    .question-text {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 700;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    .option-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      padding: 16px 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.08);
+      transform: translateY(-1px);
+    }
+
+    .option-btn .opt-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--border);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .option-btn.correct {
+      border-color: var(--success);
+      background: rgba(16,185,129,0.12);
+      color: var(--success);
+    }
+
+    .option-btn.wrong {
+      border-color: var(--danger);
+      background: rgba(239,68,68,0.12);
+      color: var(--danger);
+    }
+
+    .option-btn:disabled { cursor: default; }
+
+    /* Result screen */
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-box .stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-box .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .result-message {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .result-message .emoji { font-size: 3rem; }
+    .result-message h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin: 8px 0 4px;
+    }
+    .result-message p { color: var(--muted); font-size: 13px; }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    /* Leaderboard */
+    .lb-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lb-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 0;
+      font-size: 13px;
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      transition: transform 0.15s;
+    }
+
+    .lb-row:hover { transform: translateX(4px); }
+
+    .lb-row.rank-1 { border-color: var(--gold); background: rgba(245,158,11,0.06); }
+    .lb-row.rank-2 { border-color: var(--silver); background: rgba(148,163,184,0.06); }
+    .lb-row.rank-3 { border-color: var(--bronze); background: rgba(205,124,47,0.06); }
+
+    .rank-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .rank-1 .rank-badge { background: var(--gold); color: #000; }
+    .rank-2 .rank-badge { background: var(--silver); color: #000; }
+    .rank-3 .rank-badge { background: var(--bronze); color: #000; }
+    .rank-other .rank-badge { background: var(--border); color: var(--muted); }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .lb-name { 
+      flex: 1; 
+      font-size: 14px; 
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lb-score {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+
+    .lb-meta { font-size: 11px; color: var(--muted); text-align: right; }
+
+    .tab-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Feedback pulse */
+    @keyframes pulse-correct {
+      0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      100% { box-shadow: 0 0 0 12px rgba(16,185,129,0); }
+    }
+
+    @keyframes pulse-wrong {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+      100% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+    }
+
+    .pulse-correct { animation: pulse-correct 0.5s ease-out; }
+    .pulse-wrong   { animation: pulse-wrong 0.5s ease-out; }
+
+    /* Difficulty badge */
+    .diff-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .diff-easy   { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+    .diff-medium { background: rgba(245,158,11,0.15); color: var(--gold);    border: 1px solid rgba(245,158,11,0.3); }
+    .diff-hard   { background: rgba(239,68,68,0.15);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.3); }
+
+    .nav-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s;
+    }
+
+    .nav-dot.answered { background: var(--accent2); }
+    .nav-dot.current  { background: var(--accent); width: 20px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="orb2"></div>
+
+  <div class="container">
+    <div class="header">
+      <div class="badge">⚡ Interactive Challenge</div>
+      <h1>JS Quiz<br/>Master</h1>
+      <p>Test your JavaScript knowledge — climb the leaderboard</p>
+    </div>
+
+    <!-- START SCREEN -->
+    <div class="screen active" id="screen-start">
+      <div class="card">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Ready to play?</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:4px;">Enter Your Name</h2>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Your score will be saved to the leaderboard</p>
+
+        <div class="name-input-group">
+          <label for="player-name">Player Name</label>
+          <input type="text" id="player-name" placeholder="e.g. CodeNinja42" maxlength="20"/>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <label style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:12px;">Choose Avatar</label>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;" id="avatar-selector">
+            <label style="display:flex;flex-direction:column;gap:6px;cursor:pointer;align-items:center;font-size:11px;color:var(--text);" title="Doraemon">
+              <svg class="avatar" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="14" r="10" fill="#2a9d8f"/>
+                <circle cx="12" cy="11" r="2" fill="#fff"/>
+                <circle cx="12" cy="11" r="1" fill="#000"/>
+                <circle cx="20" cy="11" r="2" fill="#fff"/>
+                <circle cx="20" cy="11" r="1" fill="#000"/>
+                <ellipse cx="16" cy="17" rx="5" ry="3" fill="#f1f5f9"/>
+                <circle cx="16" cy="20" r="1" fill="#000"/>
+                <rect x="10" y="24" width="12" height="3" rx="1.5" fill="#06b6d4"/>
+                <path d="M12 8c0 2 2 2 2 0v-2c0-1-1-1-1 0v2z" fill="#f59e0b"/>
+              </svg>
+              <input type="radio" name="avatar" value="doraemon" checked style="width:16px;height:16px;">
+              <span>Doraemon</span>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;cursor:pointer;align-items:center;font-size:11px;color:var(--text);" title="Shinchan">
+              <svg class="avatar" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="12" r="9" fill="#f59e0b"/>
+                <circle cx="13" cy="10" r="1.5" fill="#fff"/>
+                <circle cx="13" cy="10" r="0.8" fill="#000"/>
+                <circle cx="19" cy="10" r="1.5" fill="#fff"/>
+                <circle cx="19" cy="10" r="0.8" fill="#000"/>
+                <path d="M14 17h4v3h-4z" fill="#06b6d4"/>
+                <path d="M16 20c1 0 2 .5 2 1s-1 1-2 1-2-.5-2-1 .5-1 2-1z" fill="#f1f5f9"/>
+                <path d="M12 25l2 2 2-2" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input type="radio" name="avatar" value="shinchan">
+              <span>Shinchan</span>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;cursor:pointer;align-items:center;font-size:11px;color:var(--text);" title="Oggy">
+              <svg class="avatar" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="13" r="10" fill="#94a3b8"/>
+                <circle cx="12" cy="10" r="2.5" fill="#fff"/>
+                <circle cx="12" cy="10" r="1" fill="#000"/>
+                <circle cx="20" cy="10" r="2.5" fill="#fff"/>
+                <circle cx="20" cy="10" r="1" fill="#000"/>
+                <path d="M14 18h4v2h-4z" fill="#7c3aed"/>
+                <path d="M16 22c0 1.5 1 1.5 2 0v-1c0-.5-1-.5-1 0v1z" fill="#f1f5f9"/>
+                <path d="M10 25l1.5 1.5h9l1.5-1.5" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="16" cy="6" r="1" fill="#f59e0b"/>
+              </svg>
+              <input type="radio" name="avatar" value="oggy">
+              <span>Oggy</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px;">
+
+          <div class="stat-box">
+            <div class="stat-val">15</div>
+            <div class="stat-label">Questions</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">20s</div>
+            <div class="stat-label">Per Q</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">100</div>
+            <div class="stat-label">Max Pts</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="startQuiz()">▶ Start Quiz</button>
+      </div>
+
+      <div class="card" id="leaderboard-preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="lb-title" style="margin-bottom:0;font-size:1.1rem;">🏆 Leaderboard</div>
+          <button class="btn btn-secondary" style="width:auto;padding:8px 14px;font-size:11px;" onclick="clearLeaderboard()">Clear</button>
+        </div>
+        <div id="top-scorer" style="font-size:14px;font-weight:700;color:var(--accent2);text-align:center;margin-bottom:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;"></div>
+        <div id="lb-list-preview"></div>
+      </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div class="screen" id="screen-quiz">
+      <div class="card">
+        <div class="quiz-meta">
+          <span class="q-counter" id="q-counter">Q 1 / 15</span>
+          <span class="score-badge">Score: <span id="live-score">0</span></span>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+
+        <div class="timer-wrap">
+          <div class="timer-ring">
+            <svg viewBox="0 0 48 48" width="48" height="48">
+              <circle class="ring-bg" cx="24" cy="24" r="20" fill="none" stroke-width="4"/>
+              <circle class="ring-fill" id="timer-ring" cx="24" cy="24" r="20" fill="none" stroke-width="4"
+                stroke-dasharray="125.6" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-number" id="timer-num">20</div>
+          </div>
+          <span class="timer-label">seconds remaining</span>
+        </div>
+
+        <div id="diff-badge-wrap"></div>
+        <div class="question-text" id="question-text">Loading...</div>
+        <div class="options-grid" id="options-grid"></div>
+
+        <div class="nav-dots" id="nav-dots"></div>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div class="screen" id="screen-result">
+      <div class="card">
+        <div class="result-message">
+          <div class="emoji" id="result-emoji">🎉</div>
+          <h2 id="result-heading">Great job!</h2>
+          <p id="result-subtext">You answered correctly</p>
+        </div>
+
+        <div class="result-stats">
+          <div class="stat-box">
+            <div class="stat-val" id="r-score">0</div>
+            <div class="stat-label">Score</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="r-correct">0</div>
+            <div class="stat-label">Correct</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="r-pct">0%</div>
+            <div class="stat-label">Accuracy</div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="justify-content:space-around;">
+          <button class="btn btn-secondary" onclick="showScreen('screen-start')" style="flex:1;">🏠 Home</button>
+          <button class="btn btn-secondary" onclick="showLeaderboard()" style="flex:1;">🏆 Leaderboard</button>
+          <button class="btn btn-primary" onclick="restartQuiz()" style="flex:1;">↺ Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD SCREEN -->
+    <div class="screen" id="screen-leaderboard">
+      <div class="card">
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="showTab('all')">All Time</button>
+          <button class="tab-btn" onclick="showTab('today')">Today</button>
+        </div>
+
+        <div class="lb-title">🏆 Hall of Fame</div>
+        <div id="lb-full-list"></div>
+
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-secondary" onclick="showScreen('screen-start')">← Back</button>
+          <button class="btn btn-primary" onclick="restartQuiz()">↺ Play Again</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Questions ──────────────────────────────────────────────────────────────
+    const QUESTIONS = [
+      {
+        q: "Which of the following is NOT a JavaScript data type?",
+        opts: ["String", "Boolean", "Float", "Symbol"],
+        ans: 2,
+        diff: "easy"
+      },
+      {
+        q: "What does `typeof null` return in JavaScript?",
+        opts: ["null", "undefined", "object", "number"],
+        ans: 2,
+        diff: "medium"
+      },
+      {
+        q: "Which method converts a JSON string into a JavaScript object?",
+        opts: ["JSON.parse()", "JSON.stringify()", "JSON.decode()", "JSON.convert()"],
+        ans: 0,
+        diff: "easy"
+      },
+      {
+        q: "What is the output of `0.1 + 0.2 === 0.3` in JavaScript?",
+        opts: ["true", "false", "NaN", "undefined"],
+        ans: 1,
+        diff: "medium"
+      },
+      {
+        q: "Which keyword creates a block-scoped variable that cannot be reassigned?",
+        opts: ["var", "let", "const", "static"],
+        ans: 2,
+        diff: "easy"
+      },
+      {
+        q: "What does the `===` operator check?",
+        opts: ["Value only", "Type only", "Value and type", "Reference equality"],
+        ans: 2,
+        diff: "easy"
+      },
+      {
+        q: "What is a closure in JavaScript?",
+        opts: [
+          "A function with no return value",
+          "A function that retains access to its outer scope",
+          "A way to close the browser window",
+          "A method to block JavaScript execution"
+        ],
+        ans: 1,
+        diff: "hard"
+      },
+      {
+        q: "Which built-in method removes the last element from an array and returns it?",
+        opts: ["shift()", "unshift()", "pop()", "splice()"],
+        ans: 2,
+        diff: "easy"
+      },
+      {
+        q: "What will `console.log(typeof [])` output?",
+        opts: ["array", "object", "list", "undefined"],
+        ans: 1,
+        diff: "medium"
+      },
+      {
+        q: "What is the event loop responsible for in JavaScript?",
+        opts: [
+          "Handling CSS animations",
+          "Managing memory allocation",
+          "Coordinating the call stack and callback queue",
+          "Compiling JavaScript to bytecode"
+        ],
+        ans: 2,
+        diff: "hard"
+      },
+      {
+        q: "Which statement about Promises is CORRECT?",
+        opts: [
+          "A promise can be resolved multiple times",
+          "A promise has three states: pending, fulfilled, rejected",
+          "Promises are synchronous by nature",
+          "`then()` is only called on rejection"
+        ],
+        ans: 1,
+        diff: "medium"
+      },
+      {
+        q: "What does the `spread` operator (`...`) do?",
+        opts: [
+          "Multiplies array elements",
+          "Expands iterables into individual elements",
+          "Creates a deep copy of objects",
+          "Merges two functions"
+        ],
+        ans: 1,
+        diff: "medium"
+      },
+      {
+        q: "Which method can be used to merge two or more arrays?",
+        opts: ["merge()", "concat()", "join()", "append()"],
+        ans: 1,
+        diff: "easy"
+      },
+      {
+        q: "What is `NaN` in JavaScript?",
+        opts: [
+          "A number type that represents an invalid number",
+          "A string that stands for 'Not a Number'",
+          "An error object",
+          "A null value"
+        ],
+        ans: 0,
+        diff: "medium"
+      },
+      {
+        q: "What does `async/await` syntax simplify?",
+        opts: [
+          "Synchronous code execution",
+          "Working with Promises and asynchronous code",
+          "CSS style manipulation",
+          "DOM querying"
+        ],
+        ans: 1,
+        diff: "hard"
+      }
+    ];
+
+    const TIMER_DURATION = 20;
+    const CIRCUMFERENCE = 125.6;
+
+    let state = {
+      playerName: '',
+      currentQ: 0,
+      score: 0,
+      correct: 0,
+      timer: null,
+      timeLeft: TIMER_DURATION,
+      answered: false
+    };
+
+    // ── Utility ────────────────────────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    // ── Leaderboard ────────────────────────────────────────────────────────────
+    const API_BASE = 'http://localhost:3000/api';
+
+function getLeaderboard(filter = 'all') {
+      let lb = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+      
+      if (filter === 'today') {
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const todayStart = now.getTime();
+        lb = lb.filter(s => s.date >= todayStart);
+      }
+      
+      console.log(`📊 Leaderboard (${filter}):`, lb.length, 'scores');
+      return lb.sort((a, b) => b.score - a.score).slice(0, 50);
+    }
+
+function saveScore(name, score, correct, avatar = '') {
+      const newScore = {
+        name: name.trim().substring(0,20),
+        score: Math.floor(score),
+        correct, 
+        total: QUESTIONS.length,
+        date: Date.now(),
+        avatar: avatar || ''
+      };
+      
+      let lb = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+      lb.push(newScore);
+      lb.sort((a,b) => b.score - a.score);
+      lb = lb.slice(0,50); // Top 50
+      
+      localStorage.setItem('leaderboard', JSON.stringify(lb));
+      console.log('✅ Score saved locally:', score);
+      return newScore;
+    }
+
+async function clearLeaderboard() {
+      if (confirm('Clear all scores?')) {
+        localStorage.removeItem('leaderboard');
+        renderLeaderboardPreview();
+        alert('✅ Leaderboard cleared!');
+        console.log('🗑️ Local leaderboard cleared');
+      }
+    }
+
+    async function renderLeaderboardList(containerId, filter = 'all') {
+      const el = document.getElementById(containerId);
+      el.innerHTML = '<div style="text-align:center;color:var(--muted);">Loading...</div>';
+
+      const lb = await getLeaderboard(filter);
+      if (!lb.length) {
+        el.innerHTML = '<div class="lb-empty">No scores yet — be the first! 🚀</div>';
+        return;
+      }
+
+      el.innerHTML = lb.slice(0, 10).map((e, i) => {
+        const rank = i + 1;
+        const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+        const icon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+        const pct = Math.round(e.correct / e.total * 100);
+        const d = new Date(e.date).toLocaleDateString();
+        const avatarSvg = e.avatar ? e.avatar : `<svg class="avatar" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="14" fill="#2a2a3f"/>
+                <circle cx="10" cy="12" r="3" fill="#7c3aed"/>
+                <circle cx="22" cy="12" r="3" fill="#7c3aed"/>
+                <circle cx="9" cy="11" r="1" fill="#fff"/>
+                <circle cx="21" cy="11" r="1" fill="#fff"/>
+                <path d="M8 22h16v2H8z" fill="#06b6d4"/>
+                <circle cx="16" cy="6" r="1.5" fill="#f59e0b"/>
+                <path d="M16 5l-1 3h2z" fill="#f1f5f9"/>
+              </svg>`;
+        return `
+          <div class="lb-row ${rankClass}">
+            <div class="rank-badge">${icon}</div>
+            <div class="lb-name">
+              ${avatarSvg}
+              <span>${e.name}</span>
+            </div>
+            <div>
+              <div class="lb-score">${e.score}</div>
+              <div class="lb-meta">${e.correct}/${e.total} · ${pct}%<br/>${d}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function renderLeaderboardPreview() {
+      const topEl = document.getElementById('top-scorer');
+      topEl.innerHTML = 'Loading...';
+
+      const lb = await getLeaderboard();
+      if (lb.length > 0) {
+        const top = lb[0];
+        topEl.innerHTML = `👑 Top: <strong>${top.name}</strong> - ${top.score} pts`;
+      } else {
+        topEl.innerHTML = 'No scores yet';
+      }
+      await renderLeaderboardList('lb-list-preview', 'all');
+    }
+
+    // ── Quiz Logic ─────────────────────────────────────────────────────────────
+    function getSelectedAvatar() {
+      const selected = document.querySelector('input[name="avatar"]:checked');
+      if (!selected) return '';
+      const svg = selected.closest('label').querySelector('svg').outerHTML;
+      return svg.replace('class=\\"avatar\\"', 'class=\\"avatar\\"');
+    }
+
+    function startQuiz() {
+      const name = document.getElementById('player-name').value.trim();
+      if (!name) { alert('Please enter your name!'); return; }
+      state = { 
+        playerName: name, 
+        selectedAvatar: getSelectedAvatar(), 
+        currentQ: 0, 
+        score: 0, 
+        correct: 0, 
+        timer: null, 
+        timeLeft: TIMER_DURATION, 
+        answered: false 
+      };
+      showScreen('screen-quiz');
+      renderNavDots();
+      loadQuestion();
+    }
+
+    function restartQuiz() {
+      showScreen('screen-start');
+      renderLeaderboardPreview();
+    }
+
+    function loadQuestion() {
+      const q = QUESTIONS[state.currentQ];
+      state.answered = false;
+      state.timeLeft = TIMER_DURATION;
+
+      // Meta
+      document.getElementById('q-counter').textContent = `Q ${state.currentQ + 1} / ${QUESTIONS.length}`;
+      document.getElementById('live-score').textContent = state.score;
+      document.getElementById('progress-fill').style.width = `${(state.currentQ / QUESTIONS.length) * 100}%`;
+
+      // Difficulty
+      document.getElementById('diff-badge-wrap').innerHTML =
+        `<span class="diff-badge diff-${q.diff}">● ${q.diff}</span>`;
+
+      // Question
+      document.getElementById('question-text').textContent = q.q;
+
+      // Options
+      const labels = ['A', 'B', 'C', 'D'];
+      document.getElementById('options-grid').innerHTML = q.opts.map((opt, i) =>
+        `<button class="option-btn" onclick="selectOption(${i})">
+          <span class="opt-label">${labels[i]}</span>
+          <span>${opt}</span>
+        </button>`
+      ).join('');
+
+      updateNavDots();
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(state.timer);
+      updateTimerDisplay();
+
+      state.timer = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timer);
+          if (!state.answered) timeOut();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const t = state.timeLeft;
+      const pct = t / TIMER_DURATION;
+      const offset = CIRCUMFERENCE * (1 - pct);
+      const ring = document.getElementById('timer-ring');
+      const num = document.getElementById('timer-num');
+
+      ring.style.strokeDashoffset = offset;
+      ring.style.stroke = t > 10 ? 'var(--accent2)' : t > 5 ? 'var(--gold)' : 'var(--danger)';
+      num.textContent = t;
+      num.style.color = t > 5 ? 'var(--text)' : 'var(--danger)';
+    }
+
+    function timeOut() {
+      state.answered = true;
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(b => b.disabled = true);
+      buttons[QUESTIONS[state.currentQ].ans].classList.add('correct');
+      setTimeout(nextQuestion, 1500);
+    }
+
+    function selectOption(idx) {
+      if (state.answered) return;
+      state.answered = true;
+      clearInterval(state.timer);
+
+      const q = QUESTIONS[state.currentQ];
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(b => b.disabled = true);
+
+      const timeBonus = Math.round((state.timeLeft / TIMER_DURATION) * 100);
+
+      if (idx === q.ans) {
+        buttons[idx].classList.add('correct');
+        buttons[idx].classList.add('pulse-correct');
+        state.score += timeBonus;
+        state.correct++;
+      } else {
+        buttons[idx].classList.add('wrong');
+        buttons[idx].classList.add('pulse-wrong');
+        buttons[q.ans].classList.add('correct');
+      }
+
+      document.getElementById('live-score').textContent = state.score;
+      setTimeout(nextQuestion, 1600);
+    }
+
+    function nextQuestion() {
+      state.currentQ++;
+      if (state.currentQ >= QUESTIONS.length) {
+        endQuiz();
+      } else {
+        loadQuestion();
+      }
+    }
+
+async function endQuiz() {
+      console.log('🏁 Quiz finished! Final score:', state.score, 'Showing result screen...');
+      clearInterval(state.timer);
+      
+      // Always show result first, save in background
+      const pct = Math.round(state.correct / QUESTIONS.length * 100);
+      const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎯' : pct >= 40 ? '💡' : '📚';
+      const heading = pct >= 80 ? 'Outstanding!' : pct >= 60 ? 'Great job!' : pct >= 40 ? 'Keep it up!' : 'Practice more!';
+      const sub = `You got ${state.correct} out of ${QUESTIONS.length} questions correct (${pct}% accuracy)`;
+
+      document.getElementById('result-emoji').textContent = emoji;
+      document.getElementById('result-heading').textContent = heading;
+      document.getElementById('result-subtext').textContent = sub;
+      document.getElementById('r-score').textContent = state.score;
+      document.getElementById('r-correct').textContent = state.correct;
+      document.getElementById('r-pct').textContent = pct + '%';
+
+      showScreen('screen-result'); // Show immediately, no blocking
+
+      // Save score in parallel (non-blocking)
+      saveScore(state.playerName, state.score, state.correct, state.selectedAvatar || '').catch(err => {
+        console.error('Save error (non-blocking):', err);
+      });
+    }
+
+    // ── Nav dots ───────────────────────────────────────────────────────────────
+    function renderNavDots() {
+      document.getElementById('nav-dots').innerHTML = QUESTIONS.map((_, i) =>
+        `<div class="nav-dot" id="dot-${i}"></div>`
+      ).join('');
+    }
+
+    function updateNavDots() {
+      QUESTIONS.forEach((_, i) => {
+        const d = document.getElementById(`dot-${i}`);
+        if (!d) return;
+        d.className = 'nav-dot';
+        if (i < state.currentQ) d.classList.add('answered');
+        if (i === state.currentQ) d.classList.add('current');
+      });
+    }
+
+    // ── Leaderboard screen ─────────────────────────────────────────────────────
+    let currentTab = 'all';
+
+    async function showLeaderboard() {
+      showScreen('screen-leaderboard');
+      await renderLeaderboardList('lb-full-list', currentTab);
+    }
+
+    async function showTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', (tab === 'all' && i === 0) || (tab === 'today' && i === 1));
+      });
+      await renderLeaderboardList('lb-full-list', tab);
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────────
+    renderLeaderboardPreview();
+
+    document.getElementById('player-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startQuiz();
+    });
+  </script>
+</body>
+</html>
